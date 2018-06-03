@@ -4,36 +4,43 @@ use std::char;
 use ncurses::*;
 
 fn main() {	
-	initscr();			/* Start curses mode 		*/
-	raw();			/* Line buffering disabled, Pass on
-					 * everty thing to me 		*/
-	keypad(stdscr(), true);		/* I need that nifty F1 	*/
+    // start curses mode
+	initscr();
+
+    // line buffering disabled
+	raw();
+
+    // enable F keys
+	keypad(stdscr(), true);
+
     noecho();
 
-    /* Invisible cursor. */
+    // invisible cursor
     curs_set(CURSOR_VISIBILITY::CURSOR_INVISIBLE);
 
-    /* Get the screen bounds. */
+    // get the screen bounds
     let mut max_x = 0;
     let mut max_y = 0;
     getmaxyx(stdscr(), &mut max_y, &mut max_x);
 
 	let height = 3;
 	let width = 10;
-	let mut starty = (max_y - height) / 2;	/* Calculating for a center placement */
-	let mut startx = (max_x - width) / 2;	/* of the window		*/
+
+    // calculating for a center placement of the window
+	let mut starty = (max_y - height) / 2;
+	let mut startx = (max_x - width) / 2;
+
 	printw("Press F1 or q to exit");
 	refresh();
 
-	let mut my_win = create_newwin(height, width, startx, starty);
+	let mut game_window = create_newwin(height, width, startx, starty);
 
-    let mut ch = getch();
+    let mut key_pressed = getch();
 
-	while ch != 0x71 && ch != KEY_F(1){	
+	while key_pressed != 0x71 && key_pressed != KEY_F(1){	
+        update_stats((max_x - width), (max_y - height), startx, starty, key_pressed);
 
-        update_stats((max_x - width), (max_y - height), startx, starty, ch);
-
-        match ch {
+        match key_pressed {
             KEY_LEFT => {
                 if startx > 0 { startx -= 1; }
             },
@@ -49,20 +56,23 @@ fn main() {
             _ => { }
         }
 
-        destroy_win(my_win);
-        my_win = create_newwin(height, width, startx, starty);
-        ch = getch();
+        destroy_win(game_window);
+        game_window = create_newwin(height, width, startx, starty);
+        key_pressed = getch();
 	}
 
-	endwin();			/* End curses mode		  */
+	// end curses mode
+	endwin();
 }
 
 fn create_newwin(height: i32, width: i32, startx: i32, starty: i32) -> WINDOW {	
 	let local_win = newwin(height, width, starty, startx);
-	box_(local_win, 0, 0);		/* 0, 0 gives default characters 
-					 * for the vertical and horizontal
-					 * lines			*/
-	wrefresh(local_win);		/* Show that box 		*/
+
+    // 0, 0 gives default characters for the vertical and horizontal lines
+	box_(local_win, 0, 0);
+
+    // display box
+	wrefresh(local_win);
 
 	local_win
 }
@@ -90,10 +100,10 @@ fn destroy_win(win: WINDOW) {
 }
 
 fn update_stats(startx: i32, starty: i32, game_win_x: i32, game_win_y: i32, ch: i32){
-    //let coord = format!("max_x {:?} \n max_y {:?} \n start_x {:?} \n start_y {:?}\n", max_x, max_y, startx, starty);
-    let coord = format!("x: {:?}\n y: {:?}\n ch: {}", game_win_x, game_win_y, ch);
-	let mut win = create_newwin(10, 20, startx, starty);
-    wprintw(win, &coord);
+	let win = create_newwin(15, 25, startx - 3, starty - 3);
+    mvwprintw(win, 1, 2, &format!("x: {:?}", game_win_x));
+    mvwprintw(win, 2, 2, &format!("y: {:?}", game_win_y));
+    mvwprintw(win, 3, 2, &format!("ch: 0x{:x}", ch));
 
 	wrefresh(win);
 }

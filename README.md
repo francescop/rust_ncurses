@@ -1,3 +1,3 @@
 # intro
 
-A simple ncurses test project.
+A simple ncurses learning project.
